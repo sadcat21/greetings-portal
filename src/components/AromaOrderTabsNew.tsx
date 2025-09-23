@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AromaCustomerForm from './AromaCustomerForm';
+import QuantityModal from './QuantityModal';
 import { 
   Plus, 
   Coffee, 
@@ -108,6 +109,8 @@ const AromaOrderTabsNew: React.FC = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
+  const [quantityModalOpen, setQuantityModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<AromaProduct | null>(null);
   
   const { toast } = useToast();
   const { profile, isAdmin } = useAuth();
@@ -234,7 +237,7 @@ const AromaOrderTabsNew: React.FC = () => {
     setFilteredOrders(filtered);
   }, [orders, searchTerm, dateFilter]);
 
-  const addProductToOrder = (product: AromaProduct) => {
+  const addProductToOrder = (product: AromaProduct, quantity: number = 1) => {
     const priceType = selectedCustomer?.default_price_type || 'retail';
     let unitPrice = product.retail_price;
     
@@ -247,16 +250,16 @@ const AromaOrderTabsNew: React.FC = () => {
     if (existingIndex >= 0) {
       // Increase quantity
       const updatedItems = [...orderItems];
-      updatedItems[existingIndex].quantity += 1;
+      updatedItems[existingIndex].quantity += quantity;
       updatedItems[existingIndex].total_price = updatedItems[existingIndex].unit_price * updatedItems[existingIndex].quantity;
       setOrderItems(updatedItems);
     } else {
       // Add new item
       const newItem: OrderItem = {
         product_id: product.id,
-        quantity: 1,
+        quantity: quantity,
         unit_price: unitPrice,
-        total_price: unitPrice,
+        total_price: unitPrice * quantity,
         discount_amount: 0
       };
       setOrderItems([...orderItems, newItem]);
@@ -264,8 +267,29 @@ const AromaOrderTabsNew: React.FC = () => {
 
     toast({
       title: "تمت الإضافة",
-      description: `تم إضافة ${product.name_ar} للطلب`,
+      description: `تم إضافة ${quantity} ${product.name_ar} للطلب`,
     });
+  };
+
+  const handleProductClick = (product: AromaProduct) => {
+    addProductToOrder(product, 1);
+  };
+
+  const handlePlusClick = (e: React.MouseEvent, product: AromaProduct) => {
+    e.stopPropagation();
+    setSelectedProduct(product);
+    setQuantityModalOpen(true);
+  };
+
+  const handleQuantityConfirm = (quantity: number) => {
+    if (selectedProduct) {
+      addProductToOrder(selectedProduct, quantity);
+    }
+  };
+
+  const getProductQuantity = (productId: string) => {
+    const item = orderItems.find(item => item.product_id === productId);
+    return item ? item.quantity : 0;
   };
 
   const updateItemQuantity = (index: number, newQuantity: number) => {
@@ -528,30 +552,50 @@ const AromaOrderTabsNew: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {products.map(product => (
-                    <Button
-                      key={product.id}
-                      variant="outline"
-                      className="h-auto p-4 flex flex-col gap-2 hover:bg-muted/50"
-                      onClick={() => addProductToOrder(product)}
-                    >
-                      {product.image_url && (
-                        <img
-                          src={product.image_url}
-                          alt={product.name_ar}
-                          className="w-16 h-16 object-cover rounded-md"
-                        />
-                      )}
-                      <div className="text-center">
-                        <div className="font-medium text-sm">{product.name_ar}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {selectedCustomer.default_price_type === 'retail' && `${product.retail_price} د.ج`}
-                          {selectedCustomer.default_price_type === 'wholesale' && `${product.wholesale_price} د.ج`}
-                          {selectedCustomer.default_price_type === 'super_wholesale' && `${product.super_wholesale_price} د.ج`}
-                        </div>
+                  {products.map(product => {
+                    const quantity = getProductQuantity(product.id);
+                    return (
+                      <div key={product.id} className="relative">
+                        <Button
+                          variant="outline"
+                          className="h-auto p-4 flex flex-col gap-2 hover:bg-muted/50 w-full relative overflow-hidden"
+                          onClick={() => handleProductClick(product)}
+                        >
+                          {product.image_url && (
+                            <img
+                              src={product.image_url}
+                              alt={product.name_ar}
+                              className="w-16 h-16 object-cover rounded-md"
+                            />
+                          )}
+                          <div className="text-center">
+                            <div className="font-medium text-sm">{product.name_ar}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {selectedCustomer.default_price_type === 'retail' && `${product.retail_price} د.ج`}
+                              {selectedCustomer.default_price_type === 'wholesale' && `${product.wholesale_price} د.ج`}
+                              {selectedCustomer.default_price_type === 'super_wholesale' && `${product.super_wholesale_price} د.ج`}
+                            </div>
+                          </div>
+                          
+                          {/* زر الإضافة السريعة في الزاوية */}
+                          <Button
+                            size="sm"
+                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg z-10"
+                            onClick={(e) => handlePlusClick(e, product)}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </Button>
+                        
+                        {/* عداد الكمية */}
+                        {quantity > 0 && (
+                          <div className="absolute -top-2 -left-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg animate-pulse">
+                            {quantity}
+                          </div>
+                        )}
                       </div>
-                    </Button>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -859,6 +903,18 @@ const AromaOrderTabsNew: React.FC = () => {
           fetchData();
         }}
         editingCustomer={editingCustomer}
+      />
+
+      {/* نافذة الكمية المنبثقة */}
+      <QuantityModal
+        isOpen={quantityModalOpen}
+        onClose={() => {
+          setQuantityModalOpen(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+        priceType={(selectedCustomer?.default_price_type || 'retail') as 'retail' | 'wholesale' | 'super_wholesale'}
+        onConfirm={handleQuantityConfirm}
       />
     </div>
   );
