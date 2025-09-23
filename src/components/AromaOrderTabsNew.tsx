@@ -8,11 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AromaCustomerForm from './AromaCustomerForm';
 import QuantityModal from './QuantityModal';
+import OrderSummaryModal from './OrderSummaryModal';
 import { 
   Plus, 
   Coffee, 
@@ -27,7 +29,9 @@ import {
   ShoppingCart,
   Filter,
   Search,
-  Building2
+  Building2,
+  Minus,
+  DollarSign
 } from 'lucide-react';
 
 // Interfaces
@@ -111,6 +115,7 @@ const AromaOrderTabsNew: React.FC = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [quantityModalOpen, setQuantityModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<AromaProduct | null>(null);
+  const [orderSummaryOpen, setOrderSummaryOpen] = useState(false);
   
   const { toast } = useToast();
   const { profile, isAdmin } = useAuth();
@@ -272,13 +277,21 @@ const AromaOrderTabsNew: React.FC = () => {
   };
 
   const handleProductClick = (product: AromaProduct) => {
-    addProductToOrder(product, 1);
+    setSelectedProduct(product);
+    setQuantityModalOpen(true);
   };
 
   const handlePlusClick = (e: React.MouseEvent, product: AromaProduct) => {
     e.stopPropagation();
-    setSelectedProduct(product);
-    setQuantityModalOpen(true);
+    addProductToOrder(product, 1);
+  };
+
+  const handleMinusClick = (e: React.MouseEvent, product: AromaProduct) => {
+    e.stopPropagation();
+    const existingIndex = orderItems.findIndex(item => item.product_id === product.id);
+    if (existingIndex >= 0) {
+      updateItemQuantity(existingIndex, orderItems[existingIndex].quantity - 1);
+    }
   };
 
   const handleQuantityConfirm = (quantity: number) => {
@@ -389,6 +402,7 @@ const AromaOrderTabsNew: React.FC = () => {
         discount_amount: 0,
         employee_id: profile?.id || ''
       });
+      setOrderSummaryOpen(false);
 
       fetchData();
       
@@ -450,7 +464,34 @@ const AromaOrderTabsNew: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6 rtl">
+      {/* إجمالي السعر العائم */}
+      {orderItems.length > 0 && (
+        <div className="fixed top-4 left-4 z-40 bg-gradient-to-r from-primary to-accent text-white px-6 py-3 rounded-full shadow-2xl">
+          <div className="flex items-center gap-2 font-bold">
+            <DollarSign className="w-5 h-5" />
+            <span>{calculateSubtotal().toFixed(2)} د.ج</span>
+          </div>
+        </div>
+      )}
+
+      {/* زر الطلبية العائم */}
+      {orderItems.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button
+            onClick={() => setOrderSummaryOpen(true)}
+            className="w-16 h-16 rounded-full bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300"
+          >
+            <div className="flex flex-col items-center">
+              <ShoppingCart className="w-6 h-6" />
+              <Badge variant="secondary" className="absolute -top-2 -right-2 bg-white text-primary font-bold">
+                {orderItems.reduce((sum, item) => sum + item.quantity, 0)}
+              </Badge>
+            </div>
+          </Button>
+        </div>
+      )}
+
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">
           <Coffee className="w-8 h-8 text-primary" />
@@ -551,107 +592,69 @@ const AromaOrderTabsNew: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {products.map(product => {
-                    const quantity = getProductQuantity(product.id);
-                    return (
-                      <div key={product.id} className="relative group">
-                        <Button
-                          variant="outline"
-                          className="h-auto p-4 flex flex-col gap-3 hover:bg-muted/50 w-full relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 hover:border-primary/30"
-                          onClick={() => handleProductClick(product)}
-                        >
-                          {product.image_url && (
-                            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md">
-                              <img
-                                src={product.image_url}
-                                alt={product.name_ar}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                              />
+                <ScrollArea className="h-96">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-2">
+                    {products.map(product => {
+                      const quantity = getProductQuantity(product.id);
+                      return (
+                        <div key={product.id} className="relative group">
+                          <Button
+                            variant="outline"
+                            className="h-auto p-4 flex flex-col gap-3 hover:bg-muted/50 w-full relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 hover:border-primary/30"
+                            onClick={() => handleProductClick(product)}
+                          >
+                            {product.image_url && (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md">
+                                <img
+                                  src={product.image_url}
+                                  alt={product.name_ar}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                />
+                              </div>
+                            )}
+                            
+                            {/* عرض الكمية بلون أحمر فوق العنوان */}
+                            {quantity > 0 && (
+                              <div className="text-red-500 font-bold text-lg">
+                                {quantity}
+                              </div>
+                            )}
+                            
+                            <div className="text-center space-y-1">
+                              <div className="font-medium text-sm leading-tight">{product.name_ar}</div>
+                              <div className="text-xs text-muted-foreground font-semibold">
+                                {selectedCustomer.default_price_type === 'retail' && `${product.retail_price} د.ج`}
+                                {selectedCustomer.default_price_type === 'wholesale' && `${product.wholesale_price} د.ج`}
+                                {selectedCustomer.default_price_type === 'super_wholesale' && `${product.super_wholesale_price} د.ج`}
+                              </div>
                             </div>
-                          )}
-                          <div className="text-center space-y-1">
-                            <div className="font-medium text-sm leading-tight">{product.name_ar}</div>
-                            <div className="text-xs text-muted-foreground font-semibold">
-                              {selectedCustomer.default_price_type === 'retail' && `${product.retail_price} د.ج`}
-                              {selectedCustomer.default_price_type === 'wholesale' && `${product.wholesale_price} د.ج`}
-                              {selectedCustomer.default_price_type === 'super_wholesale' && `${product.super_wholesale_price} د.ج`}
-                            </div>
-                          </div>
+                          </Button>
                           
-                          {/* عرض الكمية داخل الزر */}
-                          {quantity > 0 && (
-                            <div className="absolute top-2 left-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
-                              {quantity}
-                            </div>
-                          )}
-                        </Button>
-                        
-                        {/* زر + منفصل وأنيق */}
-                        <Button
-                          size="sm"
-                          className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg z-10 transition-all duration-300 hover:scale-110"
-                          onClick={(e) => handlePlusClick(e, product)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Order Items */}
-          {orderItems.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  عناصر الطلب
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {orderItems.map((item, index) => {
-                    const product = products.find(p => p.id === item.product_id);
-                    return (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{product?.name_ar}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {item.unit_price} د.ج × {item.quantity} = {item.total_price} د.ج
-                          </p>
+                          {/* أزرار + و - */}
+                          <div className="absolute -top-2 -right-2 flex gap-1 z-10">
+                            {quantity > 0 && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-7 h-7 rounded-full bg-white hover:bg-gray-100 text-red-500 border-red-200 shadow-lg transition-all duration-300 hover:scale-110"
+                                onClick={(e) => handleMinusClick(e, product)}
+                              >
+                                <Minus className="w-3 h-3" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              className="w-7 h-7 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg transition-all duration-300 hover:scale-110"
+                              onClick={(e) => handlePlusClick(e, product)}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateItemQuantity(index, item.quantity - 1)}
-                          >
-                            -
-                          </Button>
-                          <span className="w-8 text-center">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateItemQuantity(index, item.quantity + 1)}
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center font-semibold text-lg">
-                      <span>الإجمالي:</span>
-                      <span>{calculateSubtotal()} د.ج</span>
-                    </div>
+                      );
+                    })}
                   </div>
-                </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           )}
@@ -720,19 +723,6 @@ const AromaOrderTabsNew: React.FC = () => {
                     rows={2}
                   />
                 </div>
-
-                <Button
-                  onClick={handleSubmitOrder}
-                  disabled={loading || orderItems.length === 0}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Plus className="w-4 h-4 mr-2" />
-                  )}
-                  إنشاء الطلب
-                </Button>
               </CardContent>
             </Card>
           )}
@@ -894,29 +884,35 @@ const AromaOrderTabsNew: React.FC = () => {
         </TabsContent>
       </Tabs>
 
+      {/* Quantity Modal */}
+      <QuantityModal
+        isOpen={quantityModalOpen}
+        onClose={() => setQuantityModalOpen(false)}
+        product={selectedProduct}
+        priceType={(selectedCustomer?.default_price_type as 'retail' | 'wholesale' | 'super_wholesale') || 'retail'}
+        onConfirm={handleQuantityConfirm}
+      />
+
+      {/* Order Summary Modal */}
+      <OrderSummaryModal
+        isOpen={orderSummaryOpen}
+        onClose={() => setOrderSummaryOpen(false)}
+        orderItems={orderItems}
+        products={products}
+        onConfirmOrder={handleSubmitOrder}
+        loading={loading}
+        calculateSubtotal={calculateSubtotal}
+      />
+
       {/* Customer Form Modal */}
       <AromaCustomerForm
         isOpen={customerFormOpen}
-        onClose={() => {
-          setCustomerFormOpen(false);
-          setEditingCustomer(null);
-        }}
+        onClose={() => setCustomerFormOpen(false)}
         onSuccess={() => {
+          setCustomerFormOpen(false);
           fetchData();
         }}
         editingCustomer={editingCustomer}
-      />
-
-      {/* نافذة الكمية المنبثقة */}
-      <QuantityModal
-        isOpen={quantityModalOpen}
-        onClose={() => {
-          setQuantityModalOpen(false);
-          setSelectedProduct(null);
-        }}
-        product={selectedProduct}
-        priceType={(selectedCustomer?.default_price_type || 'retail') as 'retail' | 'wholesale' | 'super_wholesale'}
-        onConfirm={handleQuantityConfirm}
       />
     </div>
   );

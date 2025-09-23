@@ -1,1 +1,7 @@
 project_id = "jevzzasfjwrcekqghnic"
+
+[functions.create-test-accounts]
+verify_jwt = false
+
+[functions.upload-to-imgbb]
+verify_jwt = false
