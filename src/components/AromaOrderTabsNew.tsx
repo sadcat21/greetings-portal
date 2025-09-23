@@ -555,44 +555,46 @@ const AromaOrderTabsNew: React.FC = () => {
                   {products.map(product => {
                     const quantity = getProductQuantity(product.id);
                     return (
-                      <div key={product.id} className="relative">
+                      <div key={product.id} className="relative group">
                         <Button
                           variant="outline"
-                          className="h-auto p-4 flex flex-col gap-2 hover:bg-muted/50 w-full relative overflow-hidden"
+                          className="h-auto p-4 flex flex-col gap-3 hover:bg-muted/50 w-full relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-lg border-2 hover:border-primary/30"
                           onClick={() => handleProductClick(product)}
                         >
                           {product.image_url && (
-                            <img
-                              src={product.image_url}
-                              alt={product.name_ar}
-                              className="w-16 h-16 object-cover rounded-md"
-                            />
+                            <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md">
+                              <img
+                                src={product.image_url}
+                                alt={product.name_ar}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              />
+                            </div>
                           )}
-                          <div className="text-center">
-                            <div className="font-medium text-sm">{product.name_ar}</div>
-                            <div className="text-xs text-muted-foreground">
+                          <div className="text-center space-y-1">
+                            <div className="font-medium text-sm leading-tight">{product.name_ar}</div>
+                            <div className="text-xs text-muted-foreground font-semibold">
                               {selectedCustomer.default_price_type === 'retail' && `${product.retail_price} د.ج`}
                               {selectedCustomer.default_price_type === 'wholesale' && `${product.wholesale_price} د.ج`}
                               {selectedCustomer.default_price_type === 'super_wholesale' && `${product.super_wholesale_price} د.ج`}
                             </div>
                           </div>
                           
-                          {/* زر الإضافة السريعة في الزاوية */}
-                          <Button
-                            size="sm"
-                            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-primary hover:bg-primary/90 text-white shadow-lg z-10"
-                            onClick={(e) => handlePlusClick(e, product)}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                          {/* عرض الكمية داخل الزر */}
+                          {quantity > 0 && (
+                            <div className="absolute top-2 left-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                              {quantity}
+                            </div>
+                          )}
                         </Button>
                         
-                        {/* عداد الكمية */}
-                        {quantity > 0 && (
-                          <div className="absolute -top-2 -left-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg animate-pulse">
-                            {quantity}
-                          </div>
-                        )}
+                        {/* زر + منفصل وأنيق */}
+                        <Button
+                          size="sm"
+                          className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white shadow-lg z-10 transition-all duration-300 hover:scale-110"
+                          onClick={(e) => handlePlusClick(e, product)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
                       </div>
                     );
                   })}

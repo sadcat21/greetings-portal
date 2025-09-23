@@ -181,13 +181,26 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
 
           {/* معلومات المنتج */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 space-y-3 border border-primary/10">
-            <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                {product.name_ar}
-              </h3>
-              <Badge variant="secondary" className="mt-1">
-                {priceLabels[priceType]}
-              </Badge>
+            <div className="text-center space-y-3">
+              {/* صورة المنتج */}
+              {product.image_url && (
+                <div className="mx-auto w-20 h-20 rounded-xl overflow-hidden shadow-lg">
+                  <img
+                    src={product.image_url}
+                    alt={product.name_ar}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  {product.name_ar}
+                </h3>
+                <Badge variant="secondary" className="mt-1">
+                  {priceLabels[priceType]}
+                </Badge>
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
