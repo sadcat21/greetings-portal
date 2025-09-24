@@ -125,12 +125,18 @@ const SalesTracker: React.FC = () => {
     if (!user) return;
 
     try {
-      // حساب نسبة الكفاءة بناءً على الهدف
-      const currentTarget = targets.find(t => 
-        t.target_type === 'daily' && 
-        new Date(t.start_date) <= new Date(formData.date) &&
-        (!t.end_date || new Date(t.end_date) >= new Date(formData.date))
-      );
+    // جلب بيانات المنتجات من Aroma فقط لحساب الكفاءة
+    const { data: aromaProducts } = await supabase
+      .from('aroma_products')
+      .select('*')
+      .eq('is_active', true);
+
+    // حساب نسبة الكفاءة بناءً على الهدف
+    const currentTarget = targets.find(t => 
+      t.target_type === 'daily' && 
+      new Date(t.start_date) <= new Date(formData.date) &&
+      (!t.end_date || new Date(t.end_date) >= new Date(formData.date))
+    );
 
       let efficiency = 0;
       if (currentTarget) {

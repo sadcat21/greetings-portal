@@ -36,6 +36,7 @@ interface OrderSummaryModalProps {
   onConfirmOrder: () => void;
   loading: boolean;
   calculateSubtotal: () => number;
+  onEditItem: (item: OrderItem) => void;
 }
 
 const OrderSummaryModal: React.FC<OrderSummaryModalProps> = ({
@@ -45,7 +46,8 @@ const OrderSummaryModal: React.FC<OrderSummaryModalProps> = ({
   products,
   onConfirmOrder,
   loading,
-  calculateSubtotal
+  calculateSubtotal,
+  onEditItem
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -113,11 +115,19 @@ const OrderSummaryModal: React.FC<OrderSummaryModalProps> = ({
                           </div>
                         </div>
 
-                        {/* السعر الإجمالي */}
-                        <div className="text-left">
+                        {/* السعر الإجمالي وزر التعديل */}
+                        <div className="text-left space-y-2">
                           <div className="text-xl font-bold text-primary">
                             {item.total_price} د.ج
                           </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onEditItem(item)}
+                            className="text-xs"
+                          >
+                            تعديل
+                          </Button>
                         </div>
                       </div>
                     </CardContent>

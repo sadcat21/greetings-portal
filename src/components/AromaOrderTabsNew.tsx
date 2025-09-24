@@ -116,6 +116,7 @@ const AromaOrderTabsNew: React.FC = () => {
   const [quantityModalOpen, setQuantityModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<AromaProduct | null>(null);
   const [orderSummaryOpen, setOrderSummaryOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
   
   const { toast } = useToast();
   const { profile, isAdmin } = useAuth();
@@ -453,6 +454,11 @@ const AromaOrderTabsNew: React.FC = () => {
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItem(item);
+    setQuantityModalOpen(true);
   };
 
   if (loading && orders.length === 0) {
@@ -902,6 +908,7 @@ const AromaOrderTabsNew: React.FC = () => {
         onConfirmOrder={handleSubmitOrder}
         loading={loading}
         calculateSubtotal={calculateSubtotal}
+        onEditItem={handleEditItem}
       />
 
       {/* Customer Form Modal */}

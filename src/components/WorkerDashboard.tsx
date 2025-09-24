@@ -12,7 +12,8 @@ import {
   Award,
   CheckCircle2,
   Timer,
-  BarChart3
+  BarChart3,
+  Plus
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 import OrderManager from './OrderManager';
@@ -387,6 +388,15 @@ const WorkerDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => setSelectedView('orders')}
+        className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-xl z-50 p-0"
+        size="lg"
+      >
+        <Plus className="w-6 h-6" />
+      </Button>
     </div>
   );
 };
