@@ -22,6 +22,7 @@ interface QuantityModalProps {
   onClose: () => void;
   product: AromaProduct | null;
   priceType: 'retail' | 'wholesale' | 'super_wholesale';
+  initialQuantity?: number;
   onConfirm: (quantity: number) => void;
 }
 
@@ -30,6 +31,7 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
   onClose,
   product,
   priceType,
+  initialQuantity,
   onConfirm
 }) => {
   const [quantity, setQuantity] = useState(1);
@@ -93,7 +95,14 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
     }
 
     return () => {};
-  }, [isOpen, product]);
+}, [isOpen, product]);
+
+  // ضبط الكمية الابتدائية عند الفتح أو تغيير المنتج
+  useEffect(() => {
+    if (isOpen) {
+      setQuantity(initialQuantity && initialQuantity > 0 ? initialQuantity : 1);
+    }
+  }, [isOpen, initialQuantity, product?.id]);
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= (product?.stock || 0)) {

@@ -499,6 +499,15 @@ const RealWorkerDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* زر عائم لطلب جديد */}
+      <Button
+        onClick={() => setSelectedView('orders')}
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 shadow-xl z-50 p-0"
+        size="lg"
+      >
+        +
+      </Button>
     </div>
   );
 };
