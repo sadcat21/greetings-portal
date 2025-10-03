@@ -105,7 +105,7 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error(`Error processing ${account.email}:`, error);
-        results.push({ email: account.email, status: 'error', error: error.message });
+        results.push({ email: account.email, status: 'error', error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -126,7 +126,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

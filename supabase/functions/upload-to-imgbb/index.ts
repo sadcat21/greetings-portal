@@ -79,7 +79,7 @@ serve(async (req) => {
     console.error('Error uploading image to imgbb:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to upload image',
+        error: error instanceof Error ? error.message : 'Failed to upload image',
         success: false 
       }),
       {
